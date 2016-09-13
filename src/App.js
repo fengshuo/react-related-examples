@@ -12,11 +12,20 @@ class ProductCategoryRow extends Component {
 
 class ProductRow extends Component {
   render() {
+    const { stocked, name, price } = this.props;
+    /*
+    ES6 destructing
+    [a, b, ...rest] = [1, 2, 3, 4, 5]
+    var o = {p: 42, q: true};
+    var {p, q} = o;
+    console.log(p); // 42
+    console.log(q); // true
+    */
+    // <td className={this.props.stocked ? 'normal' : 'red'}>{name}</td>
     return (
       <tr className="row">
-        <td className={this.props.inStock ? 'normal' : 'red'}>{this.props.name}</td>
-        <td>{this.props.price}</td>
-
+        <td className={stocked ? 'normal' : 'red'}>{name}</td>
+        <td>{price}</td>
       </tr>
     )
   }
@@ -30,6 +39,13 @@ class ProductTableColumn extends Component {
 
   handleChangeOrder() {
     this.props.changeOrder();
+    /*
+      For passing props in nested components, there are 4 possible ways:
+      1. manually pass down props on every level of components
+      2. use things like redux to manage state in one place where state is accessible to all components
+      3. use React's context feature, but it's not stable(https://facebook.github.io/react/docs/context.html)
+      4. use plugins like react-addons-clone-with-props
+    */
   }
 
   render() {
@@ -48,6 +64,13 @@ class ProductTable extends Component {
     let lastCategory = null;
     let products = this.props.products;
     products.sort((a,b) => {
+      /*
+        ES6 doesn't allow duplicate declaration of variables if declared with let or const (different from var)
+        but you can use block to shadow it
+        {
+           let a = sth
+        }
+      */
       let first = parseInt(a.price.substring(1), 10);
       let second = parseInt(b.price.substring(1), 10);
 
@@ -73,7 +96,31 @@ class ProductTable extends Component {
       if(product.category !== lastCategory) {
         rows.push(<ProductCategoryRow key={product.category} category={product.category}/>)
       }
-      rows.push(<ProductRow name={product.name} price={product.price} inStock={product.stocked} key={product.name}/>)
+      rows.push(<ProductRow {...product} key={product.name}/>)
+      /*
+        JSX:
+        Original:
+        rows.push(<ProductRow this.props.name={product.name} this.props.price={product.price} key={product.name}/>)
+        or rows.push(<ProductRow this.props.product={proudct} key={product.name}/>) // but this is not the point of this comment, just saying
+        It is verbose to write every props on the component,(especially when you aren't sure which properties will be used later).
+        Using JSX spread attributes `{...product}` like this means the properties of the object in are copies onto the component's props
+        so you. This is JSX spread attributes, it is similar to ES6 spead operator.
+        ES6 Spread:
+        ES6 spread operator is similar, but only works for iterables, such as array.
+        Examples:
+          function myFunction(x, y, z) { }
+          var args = [0, 1, 2];
+          myFunction(...args);
+
+          var parts = ['shoulders', 'knees'];
+          var lyrics = ['head', ...parts, 'and', 'toes'];
+
+        ES6 Rest:
+        ES6 rest operator looks like the same as spread operators with ..., but it is used where you want to compress elements:
+        const [x, ...y] = ['a', 'b', 'c']; // x='a'; y=['b', 'c']
+
+        So basically, spread operator is where you want to 'unzip' elements, rest operator is where you want to 'zip' data.
+      */
       lastCategory = product.category;
     })
     return(
@@ -120,6 +167,12 @@ class SearchBar extends Component {
 class App extends Component {
   constructor() {
     super();
+    /*
+      Identify the minimal representation of UI state
+      1. is it passed in from a parent via props
+      2. does it remain unchanged over time
+      3. can you compute it based on other state or props
+    */
     this.state = {
       filterText: '',
       inStockOnly: false,
@@ -149,6 +202,9 @@ class App extends Component {
   }
 
   render() {
+  /*
+    Break UI into a component hierarchy
+  */
     return (
       <div className="App">
         <SearchBar
