@@ -22,11 +22,51 @@ class ProductRow extends Component {
   }
 }
 
+class ProductTableColumn extends Component {
+  constructor() {
+    super();
+    this.handleChangeOrder = this.handleChangeOrder.bind(this);
+  }
+
+  handleChangeOrder() {
+    this.props.changeOrder();
+  }
+
+  render() {
+    return (
+      <thead><tr>
+        <th>Name</th>
+        <th><button onClick={this.handleChangeOrder}>Price</button></th>
+      </tr></thead>
+    )
+  }
+}
+
 class ProductTable extends Component {
   render() {
     let rows = [];
     let lastCategory = null;
-    this.props.products.forEach((product) => {
+    let products = this.props.products;
+    products.sort((a,b) => {
+      let first = parseInt(a.price.substring(1), 10);
+      let second = parseInt(b.price.substring(1), 10);
+
+      if (this.props.order === 'aescend') {
+        if (first < second) {
+          return -1
+        } else {
+          return 1
+        }
+      } else {
+        if (first > second) {
+          return -1
+        } else {
+          return 1
+        }
+      }
+
+    })
+    products.forEach((product) => {
       if (product.name.indexOf(this.props.filterText) === -1 || (!product.stocked && this.props.inStockOnly)) {
         return
       }
@@ -38,10 +78,7 @@ class ProductTable extends Component {
     })
     return(
       <table>
-        <thead><tr>
-          <th>Name</th>
-          <th>Price</th>
-        </tr></thead>
+        <ProductTableColumn changeOrder={this.props.changeOrder}/>
         <tbody>
           {rows}
         </tbody>
@@ -85,10 +122,12 @@ class App extends Component {
     super();
     this.state = {
       filterText: '',
-      inStockOnly: false
+      inStockOnly: false,
+      order: 'aescend'
     }
     this.updateFilterText = this.updateFilterText.bind(this);
     this.updateInStock = this.updateInStock.bind(this);
+    this.changeOrder = this.changeOrder.bind(this);
   }
 
   updateFilterText(text) {
@@ -100,6 +139,12 @@ class App extends Component {
   updateInStock(status) {
     this.setState({
       inStockOnly: status
+    })
+  }
+
+  changeOrder() {
+    this.setState({
+      order: this.state.order === 'aescend' ? 'descend' : 'aescend'
     })
   }
 
@@ -116,6 +161,8 @@ class App extends Component {
           products={this.props.products}
           filterText={this.state.filterText}
           inStockOnly={this.state.inStockOnly}
+          order={this.state.order}
+          changeOrder={this.changeOrder}
           />
       </div>
     )
