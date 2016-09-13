@@ -1,165 +1,138 @@
 import React, { Component, PropTypes } from 'react';
-import Remarkable from 'remarkable';
 
-
-
-class Comment extends Component {
-  constructor(){
-    super();
-    /*
-      0. When write React app with ES6, you'll need to set up the initial state property in the constructore with `this.state`
-      1. In a child class constructor, `this` cannot be used until `super` is called
-      2. When to pass `props` in constructor: when you need to access `this.props` in constructor
-      3. you can only use `super()` in a derived class, and you must call `super()` before accessing `this` in the constructor
-    */
-    this.rawMarkup = this.rawMarkup.bind(this)
-  }
-  rawMarkup() {
-    let md = new Remarkable();
-    let rawMarkup = md.render(this.props.children.toString());
-    /*
-      1. Usually, a component's children is an array of components
-      But if there is only a single child, then this.props.children will be the single child itself without the array wrapper
-
-      2. You can't access children of the component via this.props.children.
-      In this example, you can't use this.props.children to get what's in <div className="comment"> (use refs instead:https://facebook.github.io/react/docs/more-about-refs.html)
-      this.props.children refers to the children between <Comment></Comment> (which is defined in <CommentList />)
-    */
-    return {__html: rawMarkup}
-  }
-
+class ProductCategoryRow extends Component {
   render() {
     return (
-      <div className="comment">
-          <p>{this.props.author}</p>
-          <span dangerouslySetInnerHTML={this.rawMarkup()} />
-      </div>
+      <tr className="categoryRow">
+        {this.props.category}
+      </tr>
     )
   }
 }
 
-class CommentList extends Component {
-
+class ProductRow extends Component {
   render() {
+    return (
+      <tr className="row">
+        <td className={this.props.inStock ? 'normal' : 'red'}>{this.props.name}</td>
+        <td>{this.props.price}</td>
 
-    let nodes = this.props.data.map(comment => {
-      return (
-          <Comment author={comment.author} key={comment.id}>
-            {comment.text}
-          </Comment>
-      )
+      </tr>
+    )
+  }
+}
+
+class ProductTable extends Component {
+  render() {
+    let rows = [];
+    let lastCategory = null;
+    this.props.products.forEach((product) => {
+      if (product.name.indexOf(this.props.filterText) === -1 || (!product.stocked && this.props.inStockOnly)) {
+        return
+      }
+      if(product.category !== lastCategory) {
+        rows.push(<ProductCategoryRow key={product.category} category={product.category}/>)
+      }
+      rows.push(<ProductRow name={product.name} price={product.price} inStock={product.stocked} key={product.name}/>)
+      lastCategory = product.category;
     })
-    return (
-      <div className="commentList">
-        {nodes}
-      </div>
+    return(
+      <table>
+        <thead><tr>
+          <th>Name</th>
+          <th>Price</th>
+        </tr></thead>
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
     )
   }
 }
 
-class CommentForm extends Component {
+class SearchBar extends Component {
   constructor() {
-    super()
-    this.state = {author: '', text: ''}
-    this.handleAuthorChange = this.handleAuthorChange.bind(this);
-    this.handleTextChange = this.handleTextChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    /*
-      In ES6 classes, there is no autobinding. You'll have to explicitly use either `bind(this)` or `arrow functions`
-      - bind this in constructor is recommended
-      - <div onClick={this.tick.bind(this)}>
-      - <div onClick={() => this.tick()}>
-    */
+    super();
+    this.handleFilterTextChange = this.handleFilterTextChange.bind(this);
+    this.handleStockChange = this.handleStockChange.bind(this);
   }
 
-  handleAuthorChange(e) {
-    this.setState({author: e.target.value})
+  handleFilterTextChange(e) {
+    let text = e.target.value;
+    this.props.updateFilterText(text);
   }
-  handleTextChange(e) {
-    this.setState({text: e.target.value})
+
+  handleStockChange(e) {
+    let status = e.target.checked;
+    this.props.updateInStock(status);
   }
-  handleSubmit(e) {
-    e.preventDefault();
-    let author = this.state.author.trim();
-    let text = this.state.text.trim();
-    if(!text || !author) {
-      return;
-    }
-    this.props.onCommitSubmit({author: author, text: text})
-    this.setState({author: '', text: ''})
-  }
+
   render() {
     return (
-      <form className="commentForm" onSubmit={this.handleSubmit}>
-        <input
-          type="text"
-          placeholder="your name"
-          value={this.state.author}
-          onChange={this.handleAuthorChange}/>
-        <input
-          type="text"
-          placeholder="your content"
-          value={this.state.text}
-          onChange={this.handleTextChange}/>
-        <input type="submit" value="Post Your Comment"/>
+      <form>
+        <input type="text" placeholder="search sth..." onChange={this.handleFilterTextChange}/>
+        <p>
+          <input type="checkbox" placeholder="search sth..." onChange={this.handleStockChange}/>
+        </p>
       </form>
     )
   }
 }
 
-class CommentBox extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {data: []}
-    this.handleCommitSubmit = this.handleCommitSubmit.bind(this)
+
+class App extends Component {
+  constructor() {
+    super();
+    this.state = {
+      filterText: '',
+      inStockOnly: false
+    }
+    this.updateFilterText = this.updateFilterText.bind(this);
+    this.updateInStock = this.updateInStock.bind(this);
   }
 
-  handleCommitSubmit(data) {
-    data.id = Date.now();
-    let comments = this.state.data;
-    let newComments = comments.concat([data]);
-    this.setState({data: newComments}); //update view before ajax request
-
-    fetch(this.props.url, {
-      method: 'POST',
-      headers: {
-        "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-      },
-      body: 'author=' + data.author + '&text=' + data.text
+  updateFilterText(text) {
+    this.setState({
+      filterText: text
     })
-    .then(res => res.json())
-    .then(json => this.setState({data: json}))
-    .catch(err => console.log("fetch error"))
-
   }
 
-  componentDidMount() {
-    fetch(this.props.url)
-    .then(res => res.json())
-    .then(json => this.setState({data: json}))
-    .catch(err => console.log("fetch error"))
+  updateInStock(status) {
+    this.setState({
+      inStockOnly: status
+    })
   }
 
   render() {
     return (
-      <div className="commentBox">
-        <CommentList data={this.state.data}/>
-        <CommentForm onCommitSubmit={this.handleCommitSubmit}/>
+      <div className="App">
+        <SearchBar
+          filterText={this.state.filterText}
+          inStockOnly={this.state.inStockOnly}
+          updateFilterText={this.updateFilterText}
+          updateInStock={this.updateInStock}
+          />
+        <ProductTable
+          products={this.props.products}
+          filterText={this.state.filterText}
+          inStockOnly={this.state.inStockOnly}
+          />
       </div>
     )
   }
 }
 
-CommentList.propTypes = {
-  data: PropTypes.array.isRequired
+SearchBar.propTypes = {
+  filterText: PropTypes.string.isRequired,
+  inStockOnly: PropTypes.bool.isRequired,
+  updateFilterText: PropTypes.func.isRequired,
+  updateInStock: PropTypes.func.isRequired,
 }
 
-// propTypes and defaultProps are defined as properties on the constructor in ES6
-
-CommentForm.propTypes = {
-  onCommitSubmit: PropTypes.func.isRequired
+ProductTable.propTypes = {
+  filterText: PropTypes.string.isRequired,
+  inStockOnly: PropTypes.bool.isRequired,
+  products: PropTypes.array.isRequired
 }
 
-
-
-export default CommentBox;
+export default App;
