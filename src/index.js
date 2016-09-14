@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import CommentBox from './App';
+import TodoApp from './components/TodoApp.react';
 
 
 ReactDOM.render(
-  <CommentBox url="http://localhost:3001/api/comments"/>,
+  <TodoApp />,
   document.getElementById('root')
 )
