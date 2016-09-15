@@ -41,9 +41,16 @@ AppDispatcher.register(function(action) {
         create(text);
       }
     break;
+
+    case 'TODO_UNDO_COMPLETE':
+      update(action.id, {complete: false})
+    break;
+
     case 'TODO_COMPLETE':
       update(action.id, {complete: true})
     break;
+
+
     default:
 
   }
@@ -63,5 +70,6 @@ function create(text) {
 function update(id, data) {
   todos[id] = Object.assign({}, todos[id], data);
 }
+
 
 export default TodoStore;

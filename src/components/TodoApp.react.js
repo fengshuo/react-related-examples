@@ -11,6 +11,7 @@ class TodoApp extends Component {
   }
 
   onChange() {
+
     this.setState(TodoStore.getAllTodo()); // update state to render new state
   }
 

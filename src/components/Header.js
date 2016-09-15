@@ -1,21 +1,26 @@
 import React, { Component, PropTypes } from 'react';
-import TodoActions from '../actions/TodoAction'
+import TodoActions from '../actions/TodoAction';
+import TodoTextInput from './TodoTextInput';
 
 class Header extends Component {
   constructor() {
     super();
-    this.handleChange = this.handleChange.bind(this);
+    this.handleSave = this.handleSave.bind(this);
   }
 
-  handleChange(e) {
-    
-      TodoActions.create(e.target.value);
+  handleSave(text) {
+      if (text.trim()) {
+        TodoActions.create(text);
+      }
   }
 
   render() {
     return (
       <div>
-        <input type="text" onBlur={this.handleChange} />
+        <TodoTextInput
+          placeholder="enter todo content"
+          onSave={this.handleSave}
+         />
       </div>
     )
   }

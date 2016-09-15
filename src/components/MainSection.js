@@ -1,11 +1,13 @@
 import React, { Component, PropTypes } from 'react';
+import TodoItem from './TodoItem'
 
 class MainSection extends Component {
 
   render() {
     let nodes = [];
+    
     for (let key in this.props.todos){
-      nodes.push(<p key={key}>{this.props.todos[key].text}</p>)
+      nodes.push(<TodoItem key={key} todo={this.props.todos[key]} />)
     }
     return (
       <div>
